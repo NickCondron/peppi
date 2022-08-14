@@ -315,9 +315,8 @@ fn player_bytes_v1_0(r: &mut &[u8]) -> Result<[u8; 8]> {
 pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 	let raw_bytes = r.to_vec();
 	let slippi = slippi::Slippi {
-		version: slippi::Version(r.read_u8()?, r.read_u8()?, r.read_u8()?),
+		version: slippi::Version(r.read_u8()?, r.read_u8()?, r.read_u8()?, r.read_u8()?),
 	};
-	r.read_u8()?; // unused (build number)
 
 	let mut unmapped = [0; 73];
 	let bitfield = {
