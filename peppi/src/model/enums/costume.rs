@@ -4,7 +4,7 @@ use super::character::External;
 macro_rules! costume {
 	($name: ident {
 		$unknown: ident,
-		$( $variant: ident ( $variant_type: ident ) => $external: ident ),* $(,)?
+		$( $variant: ident ( $variant_type: ident ) ( $red: expr, $green: expr, $blue: expr )  => $external: ident ),* $(,)?
 	}) => {
 		#[derive(Copy, Clone, PartialEq, Eq, serde::Serialize)]
 		#[serde(untagged)]
@@ -24,6 +24,27 @@ macro_rules! costume {
 			pub fn default(character: External) -> $name {
 				match character {
 					$( External::$external => $name::$variant($variant_type(0)), )*
+					_ => $name::$unknown(0),
+				}
+			}
+
+			pub fn red(character: External) -> $name {
+				match character {
+					$( External::$external => $name::$variant($variant_type($red)), )*
+					_ => $name::$unknown(0),
+				}
+			}
+
+			pub fn green(character: External) -> $name {
+				match character {
+					$( External::$external => $name::$variant($variant_type($green)), )*
+					_ => $name::$unknown(0),
+				}
+			}
+
+			pub fn blue(character: External) -> $name {
+				match character {
+					$( External::$external => $name::$variant($variant_type($blue)), )*
 					_ => $name::$unknown(0),
 				}
 			}
@@ -58,32 +79,32 @@ macro_rules! costume {
 
 costume!(Costume {
 	Unknown,
-	CaptainFalcon(CaptainFalcon) => CAPTAIN_FALCON,
-	DonkeyKong(DonkeyKong) => DONKEY_KONG,
-	Fox(Fox) => FOX,
-	GameAndWatch(GameAndWatch) => GAME_AND_WATCH,
-	Kirby(Kirby) => KIRBY,
-	Bowser(Bowser) => BOWSER,
-	Link(Link) => LINK,
-	Luigi(Luigi) => LUIGI,
-	Mario(Mario) => MARIO,
-	Marth(Marth) => MARTH,
-	Mewtwo(Mewtwo) => MEWTWO,
-	Ness(Ness) => NESS,
-	Peach(Peach) => PEACH,
-	Pikachu(Pikachu) => PIKACHU,
-	IceClimbers(IceClimbers) => ICE_CLIMBERS,
-	Jigglypuff(Jigglypuff) => JIGGLYPUFF,
-	Samus(Samus) => SAMUS,
-	Yoshi(Yoshi) => YOSHI,
-	Zelda(Zelda) => ZELDA,
-	Sheik(Sheik) => SHEIK,
-	Falco(Falco) => FALCO,
-	YoungLink(YoungLink) => YOUNG_LINK,
-	DrMario(DrMario) => DR_MARIO,
-	Roy(Roy) => ROY,
-	Pichu(Pichu) => PICHU,
-	Ganondorf(Ganondorf) => GANONDORF,
+	CaptainFalcon(CaptainFalcon) (2, 4, 5) => CAPTAIN_FALCON,
+	DonkeyKong(DonkeyKong) (2, 3, 4) => DONKEY_KONG,
+	Fox(Fox) (1, 3, 2) => FOX,
+	GameAndWatch(GameAndWatch) (1, 3, 2) => GAME_AND_WATCH,
+	Kirby(Kirby) (3, 4, 2) => KIRBY,
+	Bowser(Bowser) (1, 0, 2) => BOWSER,
+	Link(Link) (1, 0, 2) => LINK,
+	Luigi(Luigi) (3, 0, 2) => LUIGI,
+	Mario(Mario) (0, 4, 3) => MARIO,
+	Marth(Marth) (1, 2, 0) => MARTH,
+	Mewtwo(Mewtwo) (1, 3, 2) => MEWTWO,
+	Ness(Ness) (0, 3, 2) => NESS,
+	Peach(Peach) (0, 4, 3) => PEACH,
+	Pikachu(Pikachu) (1, 3, 2) => PIKACHU,
+	IceClimbers(IceClimbers) (3, 1, 0) => ICE_CLIMBERS,
+	Jigglypuff(Jigglypuff) (1, 3, 2) => JIGGLYPUFF,
+	Samus(Samus) (0, 3, 4) => SAMUS,
+	Yoshi(Yoshi) (1, 0, 2) => YOSHI,
+	Zelda(Zelda) (1, 3, 2) => ZELDA,
+	Sheik(Sheik) (1, 3, 2) => SHEIK,
+	Falco(Falco) (1, 3, 2) => FALCO,
+	YoungLink(YoungLink) (1, 0, 2) => YOUNG_LINK,
+	DrMario(DrMario) (1, 3, 2) => DR_MARIO,
+	Roy(Roy) (1, 3, 2) => ROY,
+	Pichu(Pichu) (1, 3, 2) => PICHU,
+	Ganondorf(Ganondorf) (1, 3, 2) => GANONDORF,
 });
 
 pseudo_enum!(CaptainFalcon: u8 {
