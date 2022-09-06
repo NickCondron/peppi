@@ -535,7 +535,6 @@ fn round_trip() -> Result<(), String> {
 	assert_eq!(game1.start, game2.start);
 	assert_eq!(game1.end, game2.end);
 	assert_eq!(game1.metadata, game2.metadata);
-	assert_eq!(game1.metadata_raw, game2.metadata_raw);
 
 	match (game1.frames, game2.frames) {
 		(Frames::P2(f1), Frames::P2(f2)) => {

@@ -191,4 +191,55 @@ impl Metadata {
 			console: console(json)?,
 		})
 	}
+
+	pub fn to_map(&self) -> Map<String, Value> {
+		let mut map = Map::new();
+
+		self.date.map(|date| {
+			map.insert(String::from("startAt"), date.to_rfc3339().into());
+		});
+		self.duration.map(|duration| {
+			let duration = i64::try_from(duration - 1).unwrap() + FIRST_FRAME_INDEX as i64;
+			map.insert(String::from("lastFrame"), duration.into());
+		});
+		self.platform.clone().map(|platform| {
+			map.insert(String::from("playedOn"), String::from(platform).into() );
+		});
+		self.console.clone().map(|console| {
+			map.insert(String::from("consoleNick"), console.into());
+		});
+		self.players.as_ref().map(|players| {
+			let mut players_map = Map::new();
+			for p in players {
+				let mut player_map = Map::new();
+
+				if let Some(characters) = &p.characters {
+					let characters_map = characters.iter().map(|(internal, frames)| {
+						let internal = internal.0.to_string();
+						let frames = (*frames).into();
+						(internal, frames)
+					}).collect::<Map<String, Value>>();
+					player_map.insert(String::from("characters"), characters_map.into());
+				}
+
+				if let Some(netplay) = &p.netplay {
+					let mut names_map = Map::new();
+					names_map.insert(String::from("netplay"), netplay.name.clone().into());
+					names_map.insert(String::from("code"), netplay.code.clone().into());
+					player_map.insert(String::from("names"), names_map.into());
+				}
+
+				let port_string = match p.port {
+					Port::P1 => String::from("0"),
+					Port::P2 => String::from("1"),
+					Port::P3 => String::from("2"),
+					Port::P4 => String::from("3"),
+				};
+				players_map.insert(port_string, player_map.into());
+			}
+			map.insert(String::from("players"), players_map.into());
+		});
+
+		map
+	}
 }

@@ -1,7 +1,5 @@
 use std::io::Result;
 
-use serde_json::{Map, Value};
-
 use crate::{
 	model::{
 		frame::{self, Frame, PortData},
@@ -72,7 +70,7 @@ pub struct Collector {
 	pub frames_leaders: FrameEvents,
 	pub frames_followers: FrameEvents,
 	pub items: Vec<Vec<item::Item>>,
-	pub metadata: Option<Map<String, Value>>,
+	pub metadata: Option<Metadata>,
 }
 
 macro_rules! into_game {
@@ -81,8 +79,7 @@ macro_rules! into_game {
 		let end = $gp.end.ok_or_else(|| err!("missing end event"))?;
 		let ports: Vec<_> = start.players.iter().map(|p| p.port as usize).collect();
 
-		let metadata_raw = $gp.metadata.unwrap_or_default();
-		let metadata = Metadata::parse(&metadata_raw)?;
+		let metadata = $gp.metadata.ok_or_else(||err!("missing metadata"))?;
 		if let Some(ref players) = metadata.players {
 			let meta_ports: Vec<_> = players.iter().map(|p| p.port as usize).collect();
 			if meta_ports != ports {
@@ -147,7 +144,6 @@ macro_rules! into_game {
 			end: end,
 			frames: Frames::$frames_type(frames),
 			metadata: metadata,
-			metadata_raw: metadata_raw,
 		}
 	}}
 }
@@ -268,7 +264,7 @@ impl de::Handlers for Collector {
 		Ok(())
 	}
 
-	fn metadata(&mut self, metadata: Map<String, Value>) -> Result<()> {
+	fn metadata(&mut self, metadata: Metadata) -> Result<()> {
 		self.metadata = Some(metadata);
 		Ok(())
 	}

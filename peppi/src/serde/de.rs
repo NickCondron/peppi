@@ -28,6 +28,7 @@ use crate::{
 		frame::{self, Pre, Post},
 		game::{self, MAX_PLAYERS, NUM_PORTS, Netplay, Player, PlayerType},
 		item::Item,
+		metadata::Metadata,
 		primitives::{Port, Position, Velocity},
 		slippi,
 		triggers,
@@ -753,7 +754,7 @@ pub trait Handlers {
 	/// The end of the game.
 	fn game_end(&mut self, _: game::End) -> Result<()> { Ok(()) }
 	/// Miscellaneous data not directly provided by Melee.
-	fn metadata(&mut self, _: serde_json::Map<String, serde_json::Value>) -> Result<()> { Ok(()) }
+	fn metadata(&mut self, _: Metadata) -> Result<()> { Ok(()) }
 
 	/// RNG seed and frame number at the start of a frame's processing.
 	fn frame_start(&mut self, _: FrameEvent<FrameId, frame::Start>) -> Result<()> { Ok(()) }
@@ -925,6 +926,7 @@ pub fn deserialize<R: Read, H: Handlers>(mut r: &mut R, handlers: &mut H, opts: 
 	// we know it's a map. `parse_map` will consume the corresponding "}".
 	let metadata = ubjson::de::to_map(&mut r)?;
 	info!("Raw metadata: {}", serde_json::to_string(&metadata)?);
+	let metadata = Metadata::parse(&metadata)?;
 	handlers.metadata(metadata)?;
 
 	expect_bytes(&mut r, &[0x7d])?; // top-level closing brace ("}")
