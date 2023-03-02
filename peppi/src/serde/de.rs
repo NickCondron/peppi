@@ -2,7 +2,7 @@ use std::{
 	cmp::min,
 	collections::HashMap,
 	fs::{self, File},
-	io::{self, Read, Result, Write},
+	io::{Read, Result, Write},
 	path::{Path, PathBuf},
 };
 
@@ -151,7 +151,7 @@ where
 /// codes to payload sizes. This map uses raw event codes as keys (as opposed
 /// to `Event` enum values) for forwards compatibility, as it allows us to
 /// skip unknown event types.
-fn payload_sizes<R: Read>(r: &mut R) -> Result<(usize, HashMap<u8, u16>)> {
+fn payload_sizes(r: &mut &[u8]) -> Result<(u16, HashMap<u8, u16>)> {
 	let code = r.read_u8()?;
 	if code != PAYLOADS_EVENT_CODE {
 		return Err(err!("expected event payloads, but got: {}", code));
@@ -181,7 +181,7 @@ fn payload_sizes<R: Read>(r: &mut R) -> Result<(usize, HashMap<u8, u16>)> {
 			.join(", ")
 	);
 
-	Ok((1 + size as usize, sizes)) // +1 byte for the event code
+	Ok((1 + size as u16, sizes)) // +1 byte for the event code
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -329,7 +329,7 @@ fn player_bytes_v1_0(r: &mut &[u8]) -> Result<[u8; 8]> {
 	Ok(buf)
 }
 
-pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
+pub(crate) fn game_start(mut r: &[u8]) -> Result<game::Start> {
 	let raw_bytes = r.to_vec();
 	let slippi = slippi::Slippi {
 		version: slippi::Version(r.read_u8()?, r.read_u8()?, r.read_u8()?),
@@ -372,26 +372,26 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 	let players_v1_0 = match r.is_empty() {
 		true => [None, None, None, None],
 		_ => [
-			Some(player_bytes_v1_0(r)?),
-			Some(player_bytes_v1_0(r)?),
-			Some(player_bytes_v1_0(r)?),
-			Some(player_bytes_v1_0(r)?),
+			Some(player_bytes_v1_0(&mut r)?),
+			Some(player_bytes_v1_0(&mut r)?),
+			Some(player_bytes_v1_0(&mut r)?),
+			Some(player_bytes_v1_0(&mut r)?),
 		],
 	};
 
 	let players_v1_3 = match r.is_empty() {
 		true => [None, None, None, None],
 		_ => [
-			Some(player_bytes_v1_3(r)?),
-			Some(player_bytes_v1_3(r)?),
-			Some(player_bytes_v1_3(r)?),
-			Some(player_bytes_v1_3(r)?),
+			Some(player_bytes_v1_3(&mut r)?),
+			Some(player_bytes_v1_3(&mut r)?),
+			Some(player_bytes_v1_3(&mut r)?),
+			Some(player_bytes_v1_3(&mut r)?),
 		],
 	};
 
-	let is_pal = if_more(r, |r| Ok(r.read_u8()? != 0))?;
-	let is_frozen_ps = if_more(r, |r| Ok(r.read_u8()? != 0))?;
-	let scene = if_more(r, |r| {
+	let is_pal = if_more(&mut r, |r| Ok(r.read_u8()? != 0))?;
+	let is_frozen_ps = if_more(&mut r, |r| Ok(r.read_u8()? != 0))?;
+	let scene = if_more(&mut r, |r| {
 		Ok(game::Scene {
 			minor: r.read_u8()?,
 			major: r.read_u8()?,
@@ -402,16 +402,16 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 		true => ([None, None, None, None], [None, None, None, None]),
 		_ => (
 			[
-				Some(player_bytes_v3_9_name(r)?),
-				Some(player_bytes_v3_9_name(r)?),
-				Some(player_bytes_v3_9_name(r)?),
-				Some(player_bytes_v3_9_name(r)?),
+				Some(player_bytes_v3_9_name(&mut r)?),
+				Some(player_bytes_v3_9_name(&mut r)?),
+				Some(player_bytes_v3_9_name(&mut r)?),
+				Some(player_bytes_v3_9_name(&mut r)?),
 			],
 			[
-				Some(player_bytes_v3_9_code(r)?),
-				Some(player_bytes_v3_9_code(r)?),
-				Some(player_bytes_v3_9_code(r)?),
-				Some(player_bytes_v3_9_code(r)?),
+				Some(player_bytes_v3_9_code(&mut r)?),
+				Some(player_bytes_v3_9_code(&mut r)?),
+				Some(player_bytes_v3_9_code(&mut r)?),
+				Some(player_bytes_v3_9_code(&mut r)?),
 			],
 		),
 	};
@@ -419,10 +419,10 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 	let players_v3_11 = match r.is_empty() {
 		true => [None, None, None, None],
 		_ => [
-			Some(player_bytes_v3_11(r)?),
-			Some(player_bytes_v3_11(r)?),
-			Some(player_bytes_v3_11(r)?),
-			Some(player_bytes_v3_11(r)?),
+			Some(player_bytes_v3_11(&mut r)?),
+			Some(player_bytes_v3_11(&mut r)?),
+			Some(player_bytes_v3_11(&mut r)?),
+			Some(player_bytes_v3_11(&mut r)?),
 		],
 	};
 
@@ -442,7 +442,7 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 		}
 	}
 
-	let language = if_more(r, |r| Ok(game::Language(r.read_u8()?)))?;
+	let language = if_more(&mut r, |r| Ok(game::Language(r.read_u8()?)))?;
 
 	Ok(game::Start {
 		slippi,
@@ -469,40 +469,40 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 	})
 }
 
-pub(crate) fn game_end(r: &mut &[u8]) -> Result<game::End> {
+pub(crate) fn game_end(mut r: &[u8]) -> Result<game::End> {
 	let raw_bytes = r.to_vec();
 	Ok(game::End {
 		method: game::EndMethod(r.read_u8()?),
 		raw_bytes: raw_bytes,
 		// v2.0
-		lras_initiator: if_more(r, |r| Ok(Port::try_from(r.read_u8()?).ok()))?,
+		lras_initiator: if_more(&mut r, |r| Ok(Port::try_from(r.read_u8()?).ok()))?,
 	})
 }
 
-fn frame_start(r: &mut &[u8]) -> Result<FrameEvent<FrameId, frame::Start>> {
+fn frame_start(mut r: &[u8]) -> Result<FrameEvent<FrameId, frame::Start>> {
 	let id = FrameId::new(r.read_i32::<BE>()?);
 	trace!("Frame Start: {:?}", id);
 	Ok(FrameEvent {
 		id: id,
 		event: frame::Start {
 			random_seed: r.read_u32::<BE>()?,
-			scene_frame_counter: if_more(r, |r| r.read_u32::<BE>())?,
+			scene_frame_counter: if_more(&mut r, |r| r.read_u32::<BE>())?,
 		},
 	})
 }
 
-fn frame_end(r: &mut &[u8]) -> Result<FrameEvent<FrameId, frame::End>> {
+fn frame_end(mut r: &[u8]) -> Result<FrameEvent<FrameId, frame::End>> {
 	let id = FrameId::new(r.read_i32::<BE>()?);
 	trace!("Frame End: {:?}", id);
 	Ok(FrameEvent {
 		id: id,
 		event: frame::End {
-			latest_finalized_frame: if_more(r, |r| r.read_i32::<BE>())?,
+			latest_finalized_frame: if_more(&mut r, |r| r.read_i32::<BE>())?,
 		},
 	})
 }
 
-fn item(r: &mut &[u8]) -> Result<FrameEvent<FrameId, Item>> {
+fn item(mut r: &[u8]) -> Result<FrameEvent<FrameId, Item>> {
 	let id = FrameId::new(r.read_i32::<BE>()?);
 	trace!("Item Update: {:?}", id);
 	let r#type = item::Type(r.read_u16::<BE>()?);
@@ -531,11 +531,11 @@ fn item(r: &mut &[u8]) -> Result<FrameEvent<FrameId, Item>> {
 			timer: r.read_f32::<BE>()?,
 			id: r.read_u32::<BE>()?,
 			// v3.2
-			misc: if_more(r, |r| {
+			misc: if_more(&mut r, |r| {
 				Ok([r.read_u8()?, r.read_u8()?, r.read_u8()?, r.read_u8()?])
 			})?,
 			// v3.6
-			owner: if_more(r, |r| Ok(Port::try_from(r.read_u8()?).ok()))?,
+			owner: if_more(&mut r, |r| Ok(Port::try_from(r.read_u8()?).ok()))?,
 		},
 	})
 }
@@ -565,7 +565,7 @@ fn predict_character(id: PortId, last_char_states: &[CharState; NUM_PORTS]) -> I
 }
 
 fn frame_pre(
-	r: &mut &[u8],
+	mut r: &[u8],
 	last_char_states: &[CharState; NUM_PORTS],
 ) -> Result<FrameEvent<PortId, Pre>> {
 	let id = PortId::try_new(r.read_i32::<BE>()?, r.read_u8()?, r.read_u8()? != 0)?;
@@ -602,8 +602,8 @@ fn frame_pre(
 		},
 	};
 
-	let raw_analog_x = if_more(r, |r| r.read_i8())?;
-	let damage = if_more(r, |r| r.read_f32::<BE>())?;
+	let raw_analog_x = if_more(&mut r, |r| r.read_i8())?;
+	let damage = if_more(&mut r, |r| r.read_f32::<BE>())?;
 
 	Ok(FrameEvent {
 		id,
@@ -666,7 +666,7 @@ fn update_last_char_state(
 }
 
 fn frame_post(
-	r: &mut &[u8],
+	mut r: &[u8],
 	last_char_states: &mut [CharState; NUM_PORTS],
 ) -> Result<FrameEvent<PortId, Post>> {
 	let id = PortId::try_new(r.read_i32::<BE>()?, r.read_u8()?, r.read_u8()? != 0)?;
@@ -693,19 +693,19 @@ fn frame_post(
 	let stocks = r.read_u8()?;
 
 	// v0.2
-	let state_age = if_more(r, |r| r.read_f32::<BE>())?;
+	let state_age = if_more(&mut r, |r| r.read_f32::<BE>())?;
 
 	// v2.0
-	let flags = if_more(r, |r| {
+	let flags = if_more(&mut r, |r| {
 		let mut buf = [0; 5];
 		r.read_exact(&mut buf)?;
 		Ok(flags(&buf))
 	})?;
-	let misc_as = if_more(r, |r| r.read_f32::<BE>())?;
-	let airborne = if_more(r, |r| Ok(r.read_u8()? != 0))?;
-	let ground = if_more(r, |r| Ok(ground::Ground(r.read_u16::<BE>()?)))?;
-	let jumps = if_more(r, |r| r.read_u8())?;
-	let l_cancel = if_more(r, |r| {
+	let misc_as = if_more(&mut r, |r| r.read_f32::<BE>())?;
+	let airborne = if_more(&mut r, |r| Ok(r.read_u8()? != 0))?;
+	let ground = if_more(&mut r, |r| Ok(ground::Ground(r.read_u16::<BE>()?)))?;
+	let jumps = if_more(&mut r, |r| r.read_u8())?;
+	let l_cancel = if_more(&mut r, |r| {
 		Ok(match r.read_u8()? {
 			0 => None,
 			1 => Some(true),
@@ -715,10 +715,10 @@ fn frame_post(
 	})?;
 
 	// v2.1
-	let hurtbox_state = if_more(r, |r| Ok(frame::HurtboxState(r.read_u8()?)))?;
+	let hurtbox_state = if_more(&mut r, |r| Ok(frame::HurtboxState(r.read_u8()?)))?;
 
 	// v3.5
-	let velocities = if_more(r, |r| {
+	let velocities = if_more(&mut r, |r| {
 		Ok({
 			let autogenous_x_air = r.read_f32::<BE>()?;
 			let autogenous_y = r.read_f32::<BE>()?;
@@ -746,10 +746,10 @@ fn frame_post(
 	})?;
 
 	// v3.8
-	let hitlag = if_more(r, |r| r.read_f32::<BE>())?;
+	let hitlag = if_more(&mut r, |r| r.read_f32::<BE>())?;
 
 	// v3.11
-	let animation_index = if_more(r, |r| r.read_u32::<BE>())?;
+	let animation_index = if_more(&mut r, |r| r.read_u32::<BE>())?;
 
 	update_last_char_state(id, character, state, last_char_states);
 
@@ -841,10 +841,13 @@ pub trait Handlers {
 	}
 }
 
-fn expect_bytes<R: Read>(r: &mut R, expected: &[u8]) -> Result<()> {
-	let mut actual = vec![0; expected.len()];
-	r.read_exact(&mut actual)?;
-	if expected == actual.as_slice() {
+fn expect_bytes(r: &mut &[u8], expected: &[u8]) -> Result<()> {
+	if r.len() < expected.len() {
+		return Err(err!("expected {} bytes, got {}", expected.len(), r.len()));
+	}
+	let (actual, remaining) = r.split_at(expected.len());
+	if expected == actual {
+		*r = remaining;
 		Ok(())
 	} else {
 		Err(err!("expected: {:?}, got: {:?}", expected, actual))
@@ -880,8 +883,8 @@ fn handle_splitter_event(buf: &[u8], accumulator: &mut SplitAccumulator) -> Resu
 /// the parsed event.
 ///
 /// Returns the number of bytes read by this function.
-fn event<R: Read, H: Handlers, P: AsRef<Path>>(
-	mut r: R,
+fn event<H: Handlers, P: AsRef<Path>>(
+	r: &mut &[u8],
 	payload_sizes: &HashMap<u8, u16>,
 	last_char_states: &mut [CharState; NUM_PORTS],
 	handlers: &mut H,
@@ -895,15 +898,15 @@ fn event<R: Read, H: Handlers, P: AsRef<Path>>(
 	let size = *payload_sizes
 		.get(&code)
 		.ok_or_else(|| err!("unknown event: {}", code))? as usize;
-	let mut buf = vec![0; size];
-	r.read_exact(&mut buf)?;
+	let buf = r
+		.get(..size)
+		.ok_or_else(|| err!("event {} ended abruptly", code))?;
+	*r = &r[size..];
 
 	if code == 0x10 {
 		// message splitter
 		if let Some(wrapped_event) = handle_splitter_event(&buf, splitter_accumulator)? {
 			code = wrapped_event;
-			buf.clear();
-			buf.append(&mut splitter_accumulator.raw);
 		}
 	};
 
@@ -922,14 +925,16 @@ fn event<R: Read, H: Handlers, P: AsRef<Path>>(
 	if let Some(event) = event {
 		use Event::*;
 		match event {
-			GameStart => handlers.game_start(game_start(&mut &*buf)?)?,
-			GameEnd => handlers.game_end(game_end(&mut &*buf)?)?,
-			FrameStart => handlers.frame_start(frame_start(&mut &*buf)?)?,
-			FramePre => handlers.frame_pre(frame_pre(&mut &*buf, last_char_states)?)?,
-			FramePost => handlers.frame_post(frame_post(&mut &*buf, last_char_states)?)?,
-			FrameEnd => handlers.frame_end(frame_end(&mut &*buf)?)?,
-			Item => handlers.item(item(&mut &*buf)?)?,
-			GeckoCodes => handlers.gecko_codes(&buf, splitter_accumulator.actual_size)?,
+			GameStart => handlers.game_start(game_start(buf)?)?,
+			GameEnd => handlers.game_end(game_end(buf)?)?,
+			FrameStart => handlers.frame_start(frame_start(buf)?)?,
+			FramePre => handlers.frame_pre(frame_pre(buf, last_char_states)?)?,
+			FramePost => handlers.frame_post(frame_post(buf, last_char_states)?)?,
+			FrameEnd => handlers.frame_end(frame_end(buf)?)?,
+			Item => handlers.item(item(buf)?)?,
+			GeckoCodes => {
+				handlers.gecko_codes(&splitter_accumulator.raw, splitter_accumulator.actual_size)?
+			}
 		};
 	}
 
@@ -946,18 +951,15 @@ pub struct Opts {
 }
 
 /// Parses a Slippi replay from `r`, passing events to the callbacks in `handlers` as they occur.
-pub fn deserialize<R: Read, H: Handlers>(
-	mut r: &mut R,
-	handlers: &mut H,
-	opts: Option<&Opts>,
-) -> Result<()> {
+pub fn deserialize<H: Handlers>(mut r: &[u8], handlers: &mut H, opts: Option<&Opts>) -> Result<()> {
 	// For speed, assume the `raw` element comes first and handle it manually.
 	// The official JS parser does this too, so it should be reliable.
 	expect_bytes(&mut r, &crate::SLIPPI_FILE_SIGNATURE)?;
 
-	let raw_len = r.read_u32::<BE>()? as usize;
+	let raw_len = r.read_u32::<BE>()?;
 	info!("Raw length: {} bytes", raw_len);
-	let (mut bytes_read, payload_sizes) = payload_sizes(&mut r)?;
+	let (bytes_read, payload_sizes) = payload_sizes(&mut r)?;
+	let mut bytes_read = bytes_read as u32;
 	let mut last_char_states = [DEFAULT_CHAR_STATE; NUM_PORTS];
 	let mut last_event: Option<Event> = None;
 	let skip_frames = opts.map(|o| o.skip_frames).unwrap_or(false);
@@ -972,17 +974,17 @@ pub fn deserialize<R: Read, H: Handlers>(
 	while (raw_len == 0 || bytes_read < raw_len) && last_event != Some(Event::GameEnd) {
 		if skip_frames && last_event == Some(Event::GameStart) {
 			// Skip to GameEnd, which we assume is the last event in the stream!
-			let end_offset: usize = payload_sizes[&(Event::GameEnd as u8)] as usize + 1;
+			let end_offset: u32 = payload_sizes[&(Event::GameEnd as u8)] as u32 + 1;
 			if raw_len == 0 || raw_len - bytes_read < end_offset {
 				return Err(err!(
 					"Cannot skip to game end. Replay in-progress or corrupted."
 				));
 			}
-			let skip = raw_len - bytes_read - end_offset;
+			let skip: u32 = raw_len - bytes_read - end_offset;
 			info!("Jumping to GameEnd (skipping {} bytes)", skip);
-			// In theory we should seek() if `r` is Seekable, but it's not much
-			// faster and is very awkward to implement without specialization.
-			io::copy(&mut r.by_ref().take(skip as u64), &mut io::sink())?;
+			r = r
+				.get(skip as usize..)
+				.ok_or_else(|| err!("Skip exceeds replay length"))?;
 			bytes_read += skip;
 		}
 		let (bytes, event) = event(
@@ -994,7 +996,7 @@ pub fn deserialize<R: Read, H: Handlers>(
 			&mut event_counts,
 			debug_dir,
 		)?;
-		bytes_read += bytes;
+		bytes_read += bytes as u32;
 		last_event = event;
 	}
 

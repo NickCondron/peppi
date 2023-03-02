@@ -92,33 +92,21 @@ impl error::Error for ParseError {
 	}
 }
 
-/// Since we support non-seekable readers, we use this wrapper to track
-/// position for better error reporting.
-struct TrackingReader<R> {
-	reader: R,
-	pos: u64,
-}
-
-impl<R: Read> Read for TrackingReader<R> {
-	fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-		let result = self.reader.read(buf);
-		if let Ok(read) = result {
-			self.pos += read as u64;
-		}
-		result
-	}
-}
-
 /// Parse a Slippi replay from `r`, passing events to the callbacks in `handlers` as they occur.
 pub fn parse<R: Read, H: serde::de::Handlers>(
 	r: &mut R,
 	handlers: &mut H,
 	opts: Option<&serde::de::Opts>,
 ) -> std::result::Result<(), ParseError> {
-	let mut r = TrackingReader { pos: 0, reader: r };
-	serde::de::deserialize(&mut r, handlers, opts).map_err(|e| ParseError {
+	let mut bytes = Vec::new();
+	r.read_to_end(&mut bytes).map_err(|e| ParseError {
+		pos: None,
 		error: e,
-		pos: Some(r.pos),
+	})?;
+
+	serde::de::deserialize(&bytes, handlers, opts).map_err(|e| ParseError {
+		error: e,
+		pos: None,
 	})
 }
 
