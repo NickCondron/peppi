@@ -841,16 +841,20 @@ pub trait Handlers {
 	}
 }
 
-fn expect_bytes(r: &mut &[u8], expected: &[u8]) -> Result<()> {
-	if r.len() < expected.len() {
-		return Err(err!("expected {} bytes, got {}", expected.len(), r.len()));
+fn take<'a>(r: &mut &'a [u8], n: usize) -> Option<&'a [u8]> {
+	if r.len() < n {
+		return None;
 	}
-	let (actual, remaining) = r.split_at(expected.len());
-	if expected == actual {
-		*r = remaining;
-		Ok(())
-	} else {
-		Err(err!("expected: {:?}, got: {:?}", expected, actual))
+	let (take, remaining) = r.split_at(n);
+	*r = remaining;
+	Some(take)
+}
+
+fn expect_bytes(r: &mut &[u8], expected: &[u8]) -> Result<()> {
+	match take(r, expected.len()) {
+		None => Err(err!("expected {} bytes, got {}", expected.len(), r.len())),
+		Some(actual) if actual == expected => Ok(()),
+		Some(actual) => Err(err!("expected: {:?}, got: {:?}", expected, actual)),
 	}
 }
 
@@ -898,10 +902,7 @@ fn event<H: Handlers, P: AsRef<Path>>(
 	let size = *payload_sizes
 		.get(&code)
 		.ok_or_else(|| err!("unknown event: {}", code))? as usize;
-	let buf = r
-		.get(..size)
-		.ok_or_else(|| err!("event {} ended abruptly", code))?;
-	*r = &r[size..];
+	let buf = take(r, size).ok_or_else(|| err!("event {} ended abruptly", code))?;
 
 	if code == 0x10 {
 		// message splitter
@@ -982,9 +983,7 @@ pub fn deserialize<H: Handlers>(mut r: &[u8], handlers: &mut H, opts: Option<&Op
 			}
 			let skip: u32 = raw_len - bytes_read - end_offset;
 			info!("Jumping to GameEnd (skipping {} bytes)", skip);
-			r = r
-				.get(skip as usize..)
-				.ok_or_else(|| err!("Skip exceeds replay length"))?;
+			take(&mut r, skip as usize).ok_or_else(|| err!("Skip exceeds replay length"))?;
 			bytes_read += skip;
 		}
 		let (bytes, event) = event(
