@@ -63,6 +63,7 @@ pub mod serde {
 	pub mod collect;
 	pub mod de;
 	pub mod ser;
+	pub mod sizes;
 }
 
 use std::{
