@@ -28,7 +28,7 @@ pub const FIRST_FRAME_INDEX: i32 = -123;
 /// We can parse files with higher versions than this, but we won't expose all information.
 /// When converting a replay with a higher version number to another format like Arrow,
 /// the conversion will be lossy.
-pub const MAX_SUPPORTED_VERSION: slippi::Version = slippi::Version(3, 12, 0);
+pub const MAX_SUPPORTED_VERSION: slippi::Version = slippi::Version(3, 13, 0);
 
 pseudo_enum!(PlayerType: u8 {
 	0 => HUMAN,
@@ -166,7 +166,7 @@ pub struct Start {
 
 	pub random_seed: u32,
 
-	/// mostly-redundant copy of the raw start block, for round-tripping
+	/// mostly-redundant copy of the raw start event, for round-tripping
 	#[serde(skip)]
 	#[doc(hidden)]
 	pub raw_bytes: Vec<u8>,
@@ -202,13 +202,20 @@ pseudo_enum!(EndMethod: u8 {
 	7 => NO_CONTEST,
 });
 
+/// Player placements.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub struct PlayerEnd {
+	pub port: Port,
+	pub placement: u8,
+}
+
 /// Information about the end of the game.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct End {
 	/// how the game ended
 	pub method: EndMethod,
 
-	/// mostly-redundant copy of the raw start block, for round-tripping
+	/// mostly-redundant copy of the raw end event, for round-tripping
 	#[serde(skip)]
 	#[doc(hidden)]
 	pub raw_bytes: Vec<u8>,
@@ -216,6 +223,10 @@ pub struct End {
 	/// player who LRAS'd, if any (added: v2.0)
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub lras_initiator: Option<Option<Port>>,
+
+	/// player-specific data (added: v3.13)
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub players: Option<Vec<PlayerEnd>>,
 }
 
 impl End {
