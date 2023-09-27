@@ -519,14 +519,7 @@ fn item(r: &mut &[u8]) -> Result<FrameEvent<FrameId, Item>> {
 		event: Item {
 			r#type: r#type,
 			state: item::State(r.read_u8()?),
-			direction: {
-				let x = r.read_f32::<BE>()?;
-				if x == 0.0 {
-					None
-				} else {
-					Some(x.try_into()?)
-				}
-			},
+			direction: r.read_f32::<BE>()?.into(),
 			velocity: Velocity {
 				x: r.read_f32::<BE>()?,
 				y: r.read_f32::<BE>()?,
@@ -564,7 +557,7 @@ fn frame_pre(r: &mut &[u8], last_char_states: &LastCharStates) -> Result<FrameEv
 		x: r.read_f32::<BE>()?,
 		y: r.read_f32::<BE>()?,
 	};
-	let direction = r.read_f32::<BE>()?.try_into()?;
+	let direction = r.read_f32::<BE>()?.into();
 	let joystick = Position {
 		x: r.read_f32::<BE>()?,
 		y: r.read_f32::<BE>()?,
@@ -631,7 +624,7 @@ fn frame_post(
 		x: r.read_f32::<BE>()?,
 		y: r.read_f32::<BE>()?,
 	};
-	let direction = r.read_f32::<BE>()?.try_into()?;
+	let direction = r.read_f32::<BE>()?.into();
 	let damage = r.read_f32::<BE>()?;
 	let shield = r.read_f32::<BE>()?;
 	let last_attack_landed = {
