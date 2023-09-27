@@ -2,8 +2,6 @@ use num_enum::{IntoPrimitive, TryFromPrimitive};
 use serde::Serialize;
 use std::fmt::{self, Debug, Display, Formatter};
 
-use peppi_derive::Arrow;
-
 #[derive(
 	Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, IntoPrimitive, TryFromPrimitive,
 )]
@@ -70,13 +68,13 @@ impl From<Direction> for f32 {
 	}
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Arrow)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
 pub struct Position {
 	pub x: f32,
 	pub y: f32,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize, Arrow)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Serialize)]
 pub struct Velocity {
 	pub x: f32,
 	pub y: f32,

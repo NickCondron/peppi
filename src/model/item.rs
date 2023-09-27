@@ -4,9 +4,8 @@ use crate::model::{
 	enums::item::{ChargeState, MissileType, State, TurnipType, Type},
 	primitives::{Direction, Port, Position, Velocity},
 };
-use peppi_derive::Arrow;
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Arrow)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct MiscInfo {
 	pub missile_type: MissileType,
 	pub turnip_type: TurnipType,
@@ -14,7 +13,7 @@ pub struct MiscInfo {
 	pub charge_power: u8,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Arrow)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct Item {
 	pub id: u32,
 
@@ -33,10 +32,8 @@ pub struct Item {
 	pub timer: f32,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	#[slippi(version = "3.2")]
 	pub misc_info: Option<MiscInfo>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	#[slippi(version = "3.5")]
 	pub owner: Option<Option<Port>>,
 }

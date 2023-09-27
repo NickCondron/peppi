@@ -59,7 +59,6 @@ pub mod model {
 }
 
 pub mod serde {
-	pub mod arrow;
 	pub mod collect;
 	pub mod de;
 	pub mod ser;
