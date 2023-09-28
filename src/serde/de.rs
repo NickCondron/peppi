@@ -460,6 +460,20 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 
 	let language = if_more(r, |r| Ok(game::Language(r.read_u8()?)))?;
 
+	let match_id = if_more(r, |r| {
+		let mut bytes: [u8; 51] = [0; 51];
+		r.read_exact(&mut bytes)?;
+		let first_null = bytes
+			.iter()
+			.position(|&x| x == 0)
+			.ok_or(err!("match_id missing null terminator"))?;
+		std::str::from_utf8(&bytes[0..first_null])
+			.map(String::from)
+			.map_err(|_| err!("invalid match_id"))
+	})?;
+	let game_number = if_more(r, |r| r.read_u32::<BE>())?;
+	let tiebreaker_number = if_more(r, |r| r.read_u32::<BE>())?;
+
 	Ok(game::Start {
 		slippi,
 		bitfield,
@@ -482,6 +496,10 @@ pub(crate) fn game_start(r: &mut &[u8]) -> Result<game::Start> {
 		scene,
 		// v3.12
 		language,
+		// v3.14
+		match_id,
+		game_number,
+		tiebreaker_number,
 	})
 }
 

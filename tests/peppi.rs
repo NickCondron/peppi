@@ -165,6 +165,9 @@ fn basic_game() {
 			is_frozen_ps: None,
 			scene: None,
 			language: None,
+			match_id: None,
+			game_number: None,
+			tiebreaker_number: None,
 			raw_bytes: vec![
 				1, 0, 0, 0, 50, 1, 134, 76, 195, 0, 0, 0, 0, 0, 0, 255, 255, 110, 0, 8, 0, 0, 1,
 				224, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 255, 255, 0,
@@ -536,7 +539,10 @@ fn v3_12() {
 			is_pal: Some(false),
 			is_frozen_ps: Some(false),
 			scene: Some(Scene { minor: 2, major: 8 }),
-			language: Some(Language::ENGLISH)
+			language: Some(Language::ENGLISH),
+			match_id: None,
+			game_number: None,
+			tiebreaker_number: None,
 		}
 	);
 }
