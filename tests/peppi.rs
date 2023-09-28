@@ -62,7 +62,7 @@ fn slippi_old_version() {
 	let players = game.start.players;
 
 	assert_eq!(game.start.slippi.version, Version(0, 1, 0));
-	assert_eq!(game.metadata.duration, None);
+	assert_eq!(game.metadata.unwrap().duration, None);
 
 	assert_eq!(players.len(), 2);
 	assert_eq!(players[0].character, External::FOX);
@@ -75,7 +75,7 @@ fn basic_game() {
 
 	assert_eq!(
 		game.metadata,
-		Metadata {
+		Some(Metadata {
 			date: "2018-06-22T07:52:59Z".parse::<DateTime<Utc>>().ok(),
 			duration: Some(5209),
 			platform: Some("dolphin".to_string()),
@@ -100,7 +100,7 @@ fn basic_game() {
 				},
 			]),
 			console: None,
-		}
+		})
 	);
 
 	assert_eq!(
@@ -219,7 +219,7 @@ fn skip_frames() {
 fn ics() {
 	let game = game("ics");
 	assert_eq!(
-		game.metadata.players,
+		game.metadata.unwrap().players,
 		Some(vec![
 			metadata::Player {
 				port: Port::P1,
@@ -408,13 +408,16 @@ fn joystick_udlr() {
 #[test]
 fn nintendont() {
 	let game = game("nintendont");
-	assert_eq!(game.metadata.platform, Some("nintendont".to_string()));
+	assert_eq!(
+		game.metadata.unwrap().platform,
+		Some("nintendont".to_string())
+	);
 }
 
 #[test]
 fn netplay() {
 	let game = game("netplay");
-	let players = game.metadata.players.unwrap();
+	let players = game.metadata.unwrap().players.unwrap();
 	let names: Vec<_> = players
 		.into_iter()
 		.flat_map(|p| p.netplay)
@@ -426,7 +429,10 @@ fn netplay() {
 #[test]
 fn console_name() {
 	let game = game("console_name");
-	assert_eq!(game.metadata.console, Some("Station 1".to_string()));
+	assert_eq!(
+		game.metadata.unwrap().console,
+		Some("Station 1".to_string())
+	);
 }
 
 #[test]
