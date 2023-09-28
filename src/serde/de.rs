@@ -651,6 +651,7 @@ fn frame_pre(r: &mut &[u8], last_char_states: &LastCharStates) -> Result<FrameEv
 
 	let raw_analog_x = if_more(r, |r| r.read_i8())?;
 	let damage = if_more(r, |r| r.read_f32::<BE>())?;
+	let raw_analog_y = if_more(r, |r| r.read_i8())?;
 
 	Ok(FrameEvent {
 		id,
@@ -667,6 +668,8 @@ fn frame_pre(r: &mut &[u8], last_char_states: &LastCharStates) -> Result<FrameEv
 			raw_analog_x,
 			// v1.4
 			damage,
+			// v1.15
+			raw_analog_y,
 		},
 	})
 }

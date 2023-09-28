@@ -111,6 +111,9 @@ pub struct Pre {
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub damage: Option<f32>,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub raw_analog_y: Option<i8>,
 }
 
 /// Post-frame update data, for computing stats etc.
