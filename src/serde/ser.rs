@@ -41,7 +41,9 @@ fn payload_sizes(game: &Game) -> Vec<(u8, u16)> {
 
 	sizes.push((
 		Event::FramePost as u8,
-		if ver.gte(3, 11) {
+		if ver.gte(3, 16) {
+			84
+		} else if ver.gte(3, 11) {
 			80
 		} else if ver.gte(3, 8) {
 			76
@@ -76,7 +78,9 @@ fn payload_sizes(game: &Game) -> Vec<(u8, u16)> {
 	if ver.gte(3, 0) {
 		sizes.push((
 			Event::Item as u8,
-			if ver.gte(3, 6) {
+			if ver.gte(3, 16) {
+				44
+			} else if ver.gte(3, 6) {
 				42
 			} else if ver.gte(3, 2) {
 				41
@@ -243,6 +247,11 @@ fn frame_post<W: Write>(w: &mut W, p: &frame::Post, ver: Version, id: PortId) ->
 		w.write_u32::<BE>(p.animation_index.unwrap())?;
 	}
 
+	if ver.gte(3, 16) {
+		w.write_u16::<BE>(p.instance_hit_by.unwrap())?;
+		w.write_u16::<BE>(p.instance_id.unwrap())?;
+	}
+
 	Ok(())
 }
 
@@ -271,6 +280,10 @@ fn item<W: Write>(w: &mut W, i: &item::Item, ver: Version, frame_idx: i32) -> Re
 
 	if ver.gte(3, 6) {
 		w.write_u8(i.owner.unwrap().map(|p| p as u8).unwrap_or(u8::MAX))?;
+	}
+
+	if ver.gte(3, 16) {
+		w.write_u16::<BE>(i.instance_id.unwrap())?;
 	}
 
 	Ok(())

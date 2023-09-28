@@ -36,4 +36,7 @@ pub struct Item {
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub owner: Option<Option<Port>>,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub instance_id: Option<u16>,
 }

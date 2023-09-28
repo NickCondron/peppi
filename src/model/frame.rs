@@ -184,6 +184,12 @@ pub struct Post {
 	/// animation the character is in (for Wait: 2 = Wait1, 3 = Wait2, 4 = Wait3)
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub animation_index: Option<u32>,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub instance_hit_by: Option<u16>,
+
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub instance_id: Option<u16>,
 }
 
 /// Frame data for a single character. Includes both pre-frame and post-frame data.

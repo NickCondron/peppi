@@ -591,6 +591,8 @@ fn item(r: &mut &[u8]) -> Result<FrameEvent<FrameId, Item>> {
 	})?;
 	// v3.6
 	let owner = if_more(r, |r| Ok(Port::try_from(r.read_u8()?).ok()))?;
+	// v3.16
+	let instance_id = if_more(r, |r| Ok(r.read_u16::<BE>()?))?;
 
 	Ok(FrameEvent {
 		id: frame_id,
@@ -607,6 +609,7 @@ fn item(r: &mut &[u8]) -> Result<FrameEvent<FrameId, Item>> {
 			misc_info,
 			// v3.6
 			owner,
+			instance_id,
 		},
 	})
 }
@@ -770,6 +773,10 @@ fn frame_post(
 	// v3.11
 	let animation_index = if_more(r, |r| r.read_u32::<BE>())?;
 
+	// v3.16
+	let instance_hit_by = if_more(r, |r| Ok(r.read_u16::<BE>()?))?;
+	let instance_id = if_more(r, |r| Ok(r.read_u16::<BE>()?))?;
+
 	last_char_states[id].update(character, state);
 
 	Ok(FrameEvent {
@@ -802,6 +809,8 @@ fn frame_post(
 			hitlag,
 			// v3.11
 			animation_index,
+			instance_hit_by,
+			instance_id,
 		},
 	})
 }

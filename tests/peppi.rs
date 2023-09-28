@@ -646,6 +646,7 @@ fn items() {
 						charge_power: 5,
 					}),
 					owner: Some(Some(Port::P1)),
+					instance_id: None,
 				}
 			);
 			assert_eq!(
@@ -669,6 +670,7 @@ fn items() {
 						charge_power: 5,
 					}),
 					owner: Some(Some(Port::P1)),
+					instance_id: None,
 				}
 			);
 			assert_eq!(
@@ -692,6 +694,7 @@ fn items() {
 						charge_power: 5,
 					}),
 					owner: Some(Some(Port::P1)),
+					instance_id: None,
 				}
 			);
 		}
