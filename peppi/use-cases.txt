@@ -1,0 +1,28 @@
+File:
+    Properties:
+        * Know total file size from metadata (speculative)
+        * Can seek
+        * If reading, generally fastest to read whole file into slice
+Stream:
+    Properties:
+        * Can only seek event by event
+        * 
+Live-file:
+    Properties:
+        * Possible instability from dolphin writes
+        * User might try to pass it as a 'file' despite being unfinished
+        * Will have EOF
+* with file skip frames
+* with stream return stream of events
+
+
+===============
+Interface:
+
+parse_all(slice) -> Iterator<EventReader>
+skip_frames(File, fallback) -> {start, end, metadata}
+
+======== 9/29/23
+* Skim: game start, game end, metadata, (maybe: last frame)
+* Parse All fast: (allocation with first pass)
+* Feed: send chunks of data for incremental parsing

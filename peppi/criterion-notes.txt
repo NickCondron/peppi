@@ -1,0 +1,11 @@
+Criterion issues:
+doc for `Criterion::bench_with_input()` doesn't do a good job of showing why you
+would use it over just `bench_function()` or why it takes an id and
+`bench_function()` just takes a string
+
+wasn't immediately clear the difference between benchmark group and the macro 
+
+docs for sample_size and measurement time describe the effect of the values,
+but don't do a good job describing exactly what those values mean
+
+iter_batched_mut code example is identical to iter_batched example
